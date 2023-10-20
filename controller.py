@@ -1,7 +1,7 @@
 import gymnasium as gym
 import math
 
-env = gym.make("LunarLander-v2", wind_power=0, render_mode="human")
+env = gym.make("LunarLander-v2", wind_power=5, render_mode="human")
 observation, info = env.reset()
 
 def play(observation):
@@ -50,9 +50,9 @@ class Leaf(Node):
 
 if __name__ == "__main__":
     nothing = Leaf(0)
-    fire_left = Leaf(1)
+    fire_right = Leaf(1)
     fire_main = Leaf(2)
-    fire_right = Leaf(3)
+    fire_left = Leaf(3)
 
     tree = Node(lambda o : o[0] > 0)
     
@@ -84,7 +84,6 @@ if __name__ == "__main__":
     while not done:
         move = tree.forward(observation)
         observation, reward, _, info, done = env.step(move)
-        print(observation[3])
         env.render()
 
     env.close()
