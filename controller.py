@@ -1,29 +1,8 @@
 import gymnasium as gym
 import math
 
-env = gym.make("LunarLander-v2", wind_power=5, render_mode="human")
+env = gym.make("LunarLander-v2", enable_wind=True, wind_power=10, render_mode="human")
 observation, info = env.reset()
-
-def play(observation):
-    x, y, vx, vy, a, va, l1, l2 = observation
-
-    if l1 and l2:
-        return 0
-
-    if x > 0.2:
-        return 1
-    if x < -0.2:
-        return 3
-    
-    if a > 0.1:
-        return 3
-    if a < -0.1:
-        return 1
-    
-    if abs(vy) > 0.8:
-        return 2
-
-    return 0
 
 class Node:
     def __init__(self, pred):
@@ -49,6 +28,8 @@ class Leaf(Node):
         return self.action
 
 if __name__ == "__main__":
+    # x, y, vx, vy, a, va, l1, l2 = observation
+    # TODO : Si vitesse angulaire trop élevée mais position OK, contrebalancer un peu la rotation
     nothing = Leaf(0)
     fire_right = Leaf(1)
     fire_main = Leaf(2)
