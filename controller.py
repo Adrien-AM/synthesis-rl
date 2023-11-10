@@ -1,12 +1,16 @@
 import gymnasium as gym
 import math
+import time
+
+THRESHOLD = 1
 
 env = gym.make("LunarLander-v2", enable_wind=True, wind_power=10, render_mode="human")
 observation, info = env.reset()
 
 class Node:
-    def __init__(self, pred):
+    def __init__(self, pred, timed=True):
         self.predicate = pred
+        self.timed = timed
 
     def add_child_false(self, child):
         self.child_false = child
@@ -14,18 +18,26 @@ class Node:
     def add_child_true(self, child):
         self.child_true = child
 
-    def forward(self, observation):
+    def forward(self, observation, t):
+        if t > THRESHOLD and self.timed:
+            if observation[3] < -0.9:
+                return 2
+            else:
+                return 0
         if self.predicate(observation):
-            return self.child_true.forward(observation)
+            return self.child_true.forward(observation, t)
         else:
-            return self.child_false.forward(observation)
+            return self.child_false.forward(observation, t)
 
 class Leaf(Node):
     def __init__(self, action):
         self.action = action
-        
-    def forward(self, observation):
+
+    def forward(self, observation, t):
+        print(self.action)
         return self.action
+    
+
 
 if __name__ == "__main__":
     # x, y, vx, vy, a, va, l1, l2 = observation
@@ -61,10 +73,18 @@ if __name__ == "__main__":
     tree.add_child_false(angle_left)
     tree.add_child_true(angle_right)
 
+    init_time = time.time()
+
     done = False
+    i = 0
     while not done:
-        move = tree.forward(observation)
+        t = time.time()
+        t = t - init_time
+        move = tree.forward(observation, t)
+        if move == 0:
+            print(i)
         observation, reward, _, info, done = env.step(move)
         env.render()
+        i += 1
 
     env.close()
