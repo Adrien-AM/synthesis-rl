@@ -37,9 +37,12 @@ class Probabilistic_Leaf(Node):
     def __init__(self, prob_actions):
         self.prob_actions = prob_actions
 
-    def update(self):
-        pass
-
+    def update(self, new_prob_actions):
+        """
+        todo: Learn probabilities
+        """
+        self.prob_actions = new_prob_actions
+        
     def forward(self, observation):
         action = np.random.choice(len(self.prob_actions), p=self.prob_actions)
         return action
@@ -84,5 +87,7 @@ if __name__ == "__main__":
     # Naive tree
     tree_nodes = [Node(lambda o: o[i] > paramaters[i]) for i in range(n_observations) for _ in range(2**i)]
     tree = make_tree_from_nodes(tree_nodes, n_observations)
+
+    test_tree(tree=tree, env=env)
 
     env.close()
