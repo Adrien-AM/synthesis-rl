@@ -1,6 +1,6 @@
 import gymnasium as gym
 import math
-import time
+import random
 
 THRESHOLD = 1
 
@@ -8,9 +8,8 @@ env = gym.make("LunarLander-v2", enable_wind=True, wind_power=10, render_mode="h
 observation, info = env.reset()
 
 class Node:
-    def __init__(self, pred, timed=True):
+    def __init__(self, pred):
         self.predicate = pred
-        self.timed = timed
 
     def add_child_false(self, child):
         self.child_false = child
@@ -19,11 +18,6 @@ class Node:
         self.child_true = child
 
     def forward(self, observation, t):
-        if t > THRESHOLD and self.timed:
-            if observation[3] < -0.9:
-                return 2
-            else:
-                return 0
         if self.predicate(observation):
             return self.child_true.forward(observation, t)
         else:
@@ -32,9 +26,17 @@ class Node:
 class Leaf(Node):
     def __init__(self, action):
         self.action = action
+        self.p = 0.1
 
     def forward(self, observation, t):
-        print(self.action)
+        if observation[3] < -0.5:
+            print(self.p)
+            if self.p < random.random():
+                self.p -= 0.05
+                return 2
+            else:
+                self.p = self.p + 0.05
+            
         return self.action
     
 
@@ -73,18 +75,11 @@ if __name__ == "__main__":
     tree.add_child_false(angle_left)
     tree.add_child_true(angle_right)
 
-    init_time = time.time()
-
     done = False
-    i = 0
     while not done:
-        t = time.time()
-        t = t - init_time
         move = tree.forward(observation, t)
-        if move == 0:
-            print(i)
-        observation, reward, _, info, done = env.step(move)
+        observation, reward, truncated, info, done = env.step(move)
         env.render()
-        i += 1
+        done = done or truncated
 
     env.close()
