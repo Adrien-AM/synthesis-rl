@@ -1,5 +1,8 @@
 import gymnasium as gym
 import math
+from genetic import *
+
+import numpy as np
 
 env = gym.make("LunarLander-v2", enable_wind=True, wind_power=10, render_mode="human")
 observation, info = env.reset()
@@ -20,12 +23,22 @@ class Node:
         else:
             return self.child_false.forward(observation)
 
+    @staticmethod
+    def rec_build_rand_tree(depth):
+        if depth == 0:
+            return Leaf(np.random.randint(4))
+        else:
+            return Node(np.random.randint(2)).rec_build_rand_tree(depth - 1)
+
 class Leaf(Node):
     def __init__(self, action):
         self.action = action
         
     def forward(self, observation):
         return self.action
+
+
+
 
 if __name__ == "__main__":
     # x, y, vx, vy, a, va, l1, l2 = observation
@@ -36,7 +49,7 @@ if __name__ == "__main__":
     fire_left = Leaf(3)
 
     tree = Node(lambda o : o[0] > 0)
-    
+
     angle_left = Node(lambda o : o[4] > 0)
     angle_right = Node(lambda o : o[4] > 0)
 
@@ -60,6 +73,12 @@ if __name__ == "__main__":
 
     tree.add_child_false(angle_left)
     tree.add_child_true(angle_right)
+
+    gen_tree = Node.rec_build_rand_tree(depth=7)
+
+    pop = initialize_population(10)
+    fitness_scores = calculate_fitness(pop, X_train, y_train)
+
 
     done = False
     while not done:
