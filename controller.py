@@ -44,15 +44,6 @@ class Leaf(Node):
                 if self.p > 0.1:
                     self.p -= 0.1
                 return 2
-
-        # if observation[3] < -0.3:
-        #     print(self.p)
-        #     if self.p > random.random():
-        #         self.p -= 0.08
-        #         return 2
-        #     else:
-        #         self.p = self.p + 0.08
-            
         return self.action
     
 
@@ -103,4 +94,5 @@ if __name__ == "__main__":
         env.render()
         done = done or truncated
 
+    print("reward: ", reward)
     env.close()
