@@ -57,21 +57,23 @@ def randomizedOptimization(nb_iter=300, nb_test=30):
     diffTs = np.linspace(0.1, 0.9, 100)
     deltas = np.linspace(0.01, 0.3, 100)
     speedTs = np.linspace(0.1, 0.6, 100)
-    angle = 0
-    speed = 0.3
+    angles = np.linspace(-0.5, 0.5, 100)
+    speeds = np.linspace(0.1, 0.7, 100)
     best = -200
     best_params = []
 
     seeds = np.random.randint(0, 100000, nb_test)
     
     for i in range(nb_iter):
-        if (i+1) % 20 == 0:
+        if (i+1) % 100 == 0:
             print("Episode : ", i+1)
 
         p = np.random.choice(ps)
         diffT = np.random.choice(diffTs)
         delta = np.random.choice(deltas)
         speedT = np.random.choice(speedTs)
+        angle = np.random.choice(angles)
+        speed = np.random.choice(speeds)
 
 
         nothing = Leaf(0, p, diffT, delta, speedT)
@@ -118,13 +120,13 @@ def randomizedOptimization(nb_iter=300, nb_test=30):
                 done = done or truncated
                 total_reward += reward
             
-        mean_reward = total_reward / 20
+        mean_reward = total_reward / nb_test
         # print("Mean reward : ", mean_reward)
         if mean_reward > best:
             print("Mean reward : ", mean_reward)
-            print("Parameters : ", [p, diffT, delta, speedT])
+            print("Parameters : ", [p, diffT, delta, speedT, angle, speed])
             best = mean_reward
-            best_params = [p, diffT, delta, speedT]
+            best_params = [p, diffT, delta, speedT, angle, speed]
     
     return best, best_params
 
@@ -134,21 +136,24 @@ def randomOptimizer(nb_iter=300, nb_test=30):
     init_diffT = np.random.uniform(0.1, 0.9)
     init_delta = np.random.uniform(0.01, 0.3)
     init_speedT = np.random.uniform(0.1, 0.6)
-    angle = 0
-    speed = 0.3
+    init_angle = np.random.uniform(-0.5, 0.5)
+    init_speed = np.random.uniform(0.1, 0.7)
     best = -200
-    best_params = [init_p, init_diffT, init_delta, init_speedT]
+    best_params = [init_p, init_diffT, init_delta, init_speedT, init_angle, init_speed]
 
     seeds = np.random.randint(0, 100000, nb_test)
     
     for i in range(nb_iter):
-        if (i+1) % 20 == 0:
+        if (i+1) % 100 == 0:
             print("Episode : ", i+1)
 
         p = init_p + np.random.uniform(-0.1, 0.1)
         diffT = init_diffT + np.random.uniform(-0.1, 0.1)
         delta = init_delta + np.random.uniform(-0.1, 0.1)
         speedT = init_speedT + np.random.uniform(-0.1, 0.1)
+        angle = init_angle + np.random.uniform(-0.1, 0.1)
+        speed = init_speed + np.random.uniform(-0.1, 0.1)
+        
 
         nothing = Leaf(0, p, diffT, delta, speedT)
         fire_right = Leaf(1, p, diffT, delta, speedT)
@@ -194,29 +199,32 @@ def randomOptimizer(nb_iter=300, nb_test=30):
                 done = done or truncated
                 total_reward += reward
             
-        mean_reward = total_reward / 20
+        mean_reward = total_reward / nb_test
         if mean_reward > best:
             print("Mean reward : ", mean_reward)
-            print("Parameters : ", [p, diffT, delta, speedT])
+            print("Parameters : ", [p, diffT, delta, speedT, angle, speed])
             best = mean_reward
-            best_params = [p, diffT, delta, speedT]
+            best_params = [p, diffT, delta, speedT, angle, speed]
         
-        init_p, init_diffT, init_delta, init_speedT = best_params
+        init_p, init_diffT, init_delta, init_speedT, init_angle, init_speed = best_params
     
     return best, best_params
 
 
 if __name__ == "__main__":
-    print("Randomized optimization")
-    best_params_1 = randomizedOptimization(nb_iter=1500, nb_test=20)
-
+    # print("Randomized optimization")
+    # best_params_1 = randomizedOptimization(nb_iter=3000, nb_test=50)
+    beg_time = time.time()
     print("Random optimizer")
-    best_params_2 = randomOptimizer(nb_iter=1500, nb_test=20)
+    best_params_2 = randomOptimizer(nb_iter=5000, nb_test=75)
 
-    print("Best reward 1 : ", best_params_1[0])
-    print("Best parameters 2 : ", best_params_1[1])
+    # print("Best reward 1 : ", best_params_1[0])
+    # print("Best parameters 2 : ", best_params_1[1])
     print("Best reward 2 : ", best_params_2[0])
     print("Best parameters 2 : ", best_params_2[1])
 
-# Best reward 2 :  -71.72182293387648
-# Best parameters 2 :  [0.33652405083830694, 1.0099550012525433, 0.07304317731214606, 0.48982303070654243]
+    print("Time : ", time.time() - beg_time)
+
+# Best reward 2 :  -59.63418448431338
+# Best parameters 2 :  [0.9834065323088892, 0.37293696978873814, 0.1791499273371176, 0.2334054655870582, -0.010993098070396626, 0.7014280484168709]
+
