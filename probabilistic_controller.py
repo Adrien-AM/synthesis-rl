@@ -1,7 +1,9 @@
 import gymnasium as gym
 import numpy as np
 
+import time
 import hill_climbing
+
 
 
 env = gym.make("LunarLander-v2", render_mode="human")
@@ -57,8 +59,8 @@ def test_tree(tree: Node, env: gym.Env, render: bool=False):
         n_steps += 1
         if render:
             env.render()
-    print(f'Total reward: {cum_reward}')
-    return cum_reward
+    print(f'Total reward: {np.round(cum_reward, 3)}')
+    return np.round(cum_reward, 3)
     # return n_steps, cum_reward
 
 def make_tree_from_nodes(list_nodes: list[Node], init_child: bool=True):
@@ -79,7 +81,6 @@ def make_tree_from_nodes(list_nodes: list[Node], init_child: bool=True):
     return list_nodes[0]
 
 def eval_func(parameters):
-        print("##################################")
         print("Parameters to evaluate:", parameters)
         theta_condition_1.add_child_true(Probabilistic_Leaf(parameters[0]))
         theta_condition_1.add_child_false(Probabilistic_Leaf(parameters[1]))
@@ -88,6 +89,13 @@ def eval_func(parameters):
         theta_condition_2.add_child_false(Probabilistic_Leaf(parameters[3]))
 
         return test_tree(tree_balance, env)
+
+def save_parameters(parameter_list):
+    np.save("weights.pt", np.array(parameter_list))
+    return True
+
+def load_parameters():
+    return np.load("weights.pt")
 
 if __name__ == "__main__":
     ACTION_NOTHING = Leaf(0)
@@ -114,33 +122,39 @@ if __name__ == "__main__":
     tree_balance.add_child_true(theta_condition_1)
     tree_balance.add_child_false(theta_condition_2)
 
-    parameter_leaves = [
-        [0.1, 0.1, 0.1, 0.1],
-        [0.1, 0.1, 0.1, 0.1],
-        [0.1, 0.1, 0.1, 0.1],
-        [0.1, 0.1, 0.1, 0.1]
+    init_parameter_leaves = [
+        [0.1, 0.1, 0.1, 0.7],
+        [0.1, 0.7, 0.1, 0.1],
+        [0.1, 0.1, 0.1, 0.7],
+        [0.1, 0.7, 0.1, 0.1]
     ]
     
-    theta_condition_1.add_child_true(Probabilistic_Leaf(parameter_leaves[0]))
-    theta_condition_1.add_child_false(Probabilistic_Leaf(parameter_leaves[1]))
+    theta_condition_1.add_child_true(Probabilistic_Leaf(init_parameter_leaves[0]))
+    theta_condition_1.add_child_false(Probabilistic_Leaf(init_parameter_leaves[1]))
 
-    theta_condition_2.add_child_true(Probabilistic_Leaf(parameter_leaves[2]))
-    theta_condition_2.add_child_false(Probabilistic_Leaf(parameter_leaves[3]))
+    theta_condition_2.add_child_true(Probabilistic_Leaf(init_parameter_leaves[2]))
+    theta_condition_2.add_child_false(Probabilistic_Leaf(init_parameter_leaves[3]))
 
     # test_tree(tree_balance, env)
 
-    hill_climbing_algo = hill_climbing.Hill_Climbing(parameters=parameter_leaves,\
+    hill_climbing_algo = hill_climbing.Hill_Climbing(parameters=init_parameter_leaves,\
                                                      eval_func=eval_func)
     
     EPISODES = 10
-    for _ in range(EPISODES):
+    start_time = time.time()
+    for episode in range(EPISODES):
+        print("EPISODE: ", episode)
         new_parameters = hill_climbing_algo.run_hill_climbing(10)
         print()
         print("--------------------------------")
         print("New parameters:", new_parameters)
         print("--------------------------------")
+        print()
         eval_func(new_parameters)
         hill_climbing_algo.parameters = new_parameters
-
+    total_time = time.time() - start_time
+    print(f"Total time: {total_time}")
+    
+    save_parameters(new_parameters)
 
     env.close()

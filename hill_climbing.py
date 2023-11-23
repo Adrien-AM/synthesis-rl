@@ -15,7 +15,7 @@ class Hill_Climbing:
 
         self.step_size = np.array([1]*self.nb_parameters)
 
-        self.acceleration = 1.2
+        self.acceleration = np.round(np.sqrt(2), 3)
         self.candidates = np.array([-self.acceleration, -1/self.acceleration, 1/self.acceleration, self.acceleration])
 
         self.current_point = self.parameters
@@ -26,6 +26,7 @@ class Hill_Climbing:
         return self.parameters
 
     def run_hill_climbing(self, epsilon):
+        n_evaluations = 0
         while True:
             before_score = self.current_score
             for i, parameter in enumerate(self.current_point):
@@ -33,21 +34,25 @@ class Hill_Climbing:
                     before_point = self.current_point[i][j]
                     best_step = 0
                     for k in range(len(self.candidates)):
-                        step = self.step_size[i]*self.candidates[k]
+                        step = np.round(self.step_size[i]*self.candidates[k], 3)
                         print("Step: ", step)
-                        self.current_point[i][j] = before_point*step
+                        self.current_point[i][j] = np.round(before_point+step, 3)
                         print("New value: ", self.current_point[i][j])
                         score = self.eval_func(self.current_point)
+                        
+                        n_evaluations += 1
+
                         if score > before_score:
                             self.current_score = score
                             best_step = step
-
+                    print("NB_evaluations: ", n_evaluations)
+                    print("----------------------------------------------------")
                     if best_step == 0:
                         self.current_point[i][j] = before_point
                         self.step_size[i] = step
                     else:
                         print("Update parameter: ", i + 1)
-                        self.current_point[i][j] = before_point+best_step
+                        self.current_point[i][j] = np.round(before_point+best_step, 3)
                         self.step_size[i] = best_step//self.acceleration
-                if (self.current_score - before_score) < epsilon:
-                    return self.current_point
+            if (self.current_score - before_score) < epsilon:
+                return self.current_point
