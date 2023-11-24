@@ -5,8 +5,8 @@ import numpy as np
 from genetic import *
 
 # Define the genetic algorithm parameters
-population_size = 4
-num_generations = 10
+population_size = 50
+num_generations = 1000
 mutation_rate = 0.1
 
 
@@ -23,26 +23,29 @@ def initialize_population(population_size, max_depth = 7):
 def calculate_fitness(population, env):
     fitness_scores = []
     observation, _ = env.reset()
+    reward_total = 0
     reward = 0
     for individual in population:
         done = False
         terminated = False
         while not (done or terminated):
             move = individual.forward(observation)
-            move = np.random.choice(3, 1, p=move)[0]
+            move = np.random.choice(4, 1, p=move)[0]
             observation, reward, terminated, info, done = env.step(move)
-        fitness_scores.append(reward)
+            reward_total += reward
+        if reward > -100:
+            print("WOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        fitness_scores.append(reward_total)
     return np.array(fitness_scores)
 
 
 # Function to select individuals for the next generation using tournament selection
 def tournament_selection(population, fitness_scores, tournament_size):
     selected_indices = []
-    for _ in range(population_size):
-        tournament_indices = np.random.choice(range(population_size), size=tournament_size, replace=False)
-        tournament_fitness = fitness_scores[tournament_indices]
-        winner_index = tournament_indices[np.argmax(tournament_fitness)]
-        selected_indices.append(winner_index)
+    for _ in range(len(population)):
+        indices = np.random.randint(0, len(population), tournament_size)
+        selected_index = indices[np.argmax(fitness_scores[indices])]
+        selected_indices.append(selected_index)
     return selected_indices
 
 
@@ -53,15 +56,12 @@ def crossover(parent1, parent2):
     # crossover_depth = np.random.randint(1, max_depth)
 
     # Clone the parents to avoid modifying them
-    child1 = parent1.clone()
-    child2 = parent2.clone()
-
-    # Perform crossover by swapping subtrees
-    child1.child_true, child2.child_true = \
-        child2.child_true, child1.child_true.copy()
-
-    child1.child_false, child2.child_false = \
-        child2.child_false, child1.child_false.copy()
+    child1 = Node(parent1.predicate)
+    child1.child_false = parent1.child_false
+    child1.child_true = parent2.child_true
+    child2 = Node(parent2.predicate)
+    child2.child_false = parent2.child_false
+    child2.child_true = parent1.child_true
 
     return child1, child2
 
@@ -74,8 +74,8 @@ def mutate(individual, mutation_rate):
     return individual
 
 
-env = gym.make("LunarLander-v2", enable_wind=True, wind_power=10)
-env_rend = gym.make("LunarLander-v2", enable_wind=True, wind_power=10, render_mode="human")
+env = gym.make("LunarLander-v2", enable_wind=False, wind_power=0)
+env_rend = gym.make("LunarLander-v2", enable_wind=False, wind_power=0, render_mode="human")
 observation, info = env.reset()
 
 observation_high = [1.5, 1.5, 5., 5., 3.14, 5., 1., 1.]
@@ -122,7 +122,12 @@ class Leaf(Node):
     def forward(self, observation):
         return self.action
 
-
+def print_leafs(tree):
+    if isinstance(tree, Leaf):
+        print(tree.action)
+    else:
+        print_leafs(tree.child_false)
+        print_leafs(tree.child_true)
 
 
 if __name__ == "__main__":
@@ -162,7 +167,7 @@ if __name__ == "__main__":
 
     print("Building tree")
 
-    pop = initialize_population(population_size=100, max_depth=7)
+    pop = initialize_population(population_size=population_size, max_depth=5)
 
     tree = pop[0]
 
@@ -176,12 +181,15 @@ if __name__ == "__main__":
         observation, reward, terminated, info, done = env_rend.step(move)
         env_rend.render()
 
+    # print_leafs(tree)
+
     env.reset()
 
-    env_rend.close()
+    env_rend.reset()
+
 
     for generation in range(num_generations):
-        print(f"Generation {generation} started")
+        # print(f"Generation {generation} started")
         # Calculate fitness scores
         fitness_scores = calculate_fitness(pop, env)
 
@@ -191,22 +199,19 @@ if __name__ == "__main__":
         # Create the next generation through crossover and mutation
         next_generation = []
         for i in range(0, population_size, 2):
-            print(f"Generation {generation} - {i}/{population_size}")
             parent1 = pop[selected_indices[i]]
             parent2 = pop[selected_indices[i + 1]]
 
-            print("Crossover")
             child1, child2 = crossover(parent1, parent2)
             child1 = mutate(child1, mutation_rate=0.1)
             child2 = mutate(child2, mutation_rate=0.1)
 
-            print("Appending")
             next_generation.append(child1)
             next_generation.append(child2)
 
         pop = next_generation
-        print(f"Generation {generation} finished")
 
+    print(pop)
     print(fitness_scores)
 
 
@@ -214,11 +219,16 @@ if __name__ == "__main__":
     best_index = np.argmax(fitness_scores)
     tree = pop[best_index]
 
+    # print_leafs(tree)
+
 
     done = False
-    while not done:
+    terminated = False
+    while not (done or terminated):
         move = tree.forward(observation)
-        observation, reward, _, info, done = env_rend.step(move)
+        move = np.random.choice(4, 1, p=move)[0]
+        observation, reward, terminated, info, done = env_rend.step(move)
         env_rend.render()
 
     env_rend.close()
+    env.close()
