@@ -1,4 +1,5 @@
 import gymnasium as gym
+from genetic import *
 
 ACTION_NOTHING = 0
 ACTION_LEFT = 1
@@ -30,11 +31,11 @@ class PIDController:
         return output
 
 class LunarController:
-    def __init__(self):
+    def __init__(self, param1=(.5, 0, 2), param3=(-.8, 0, 0)):
         # Setpoint is 0 for all 3 of them since we want to get the robot to point (0,0) with angle 0
-        self.xcontroller = PIDController(P=.5, I=0, D=2, setpoint=0)
-        self.ycontroller = PIDController(P=.1, I=0, D=25, setpoint=0)
-        self.acontroller = PIDController(P=-.8, I=-0, D=0, setpoint=0)
+        self.xcontroller = PIDController(P=param1[0], I=0, D=param3[0], setpoint=0)
+        self.ycontroller = PIDController(P=param1[1], I=0, D=param3[1], setpoint=0)
+        self.acontroller = PIDController(P=param1[2], I=0, D=param3[2], setpoint=0)
 
     def play(self, obs):
         x, y, vx, vy, a, va, l1, l2 = obs
@@ -52,10 +53,9 @@ class LunarController:
         
         return ACTION_NOTHING
 
-def display():
+def display(controller = LunarController()):
     env = gym.make("LunarLander-v2", render_mode="human")
     observation, info = env.reset()
-    controller = LunarController()
 
     done = False
     truncated = False
@@ -72,16 +72,13 @@ def display():
     print(f'Total reward : {total_reward:.2f}')
     env.close()
 
-def evaluate(nb_epochs = 1000):
+def evaluate(nb_epochs = 1000, controller = LunarController()):
     env = gym.make("LunarLander-v2")
     observation, info = env.reset()
-    controller = LunarController()
 
     i = 0
     s = 0
     while i < nb_epochs:
-        if i % (nb_epochs//10) == 0:
-            print(f'Iteration {i}/{nb_epochs}')
         i += 1
         done = False
         truncated = False
@@ -98,8 +95,35 @@ def evaluate(nb_epochs = 1000):
     return s / nb_epochs
 
 
+
+population_size = 25
+vector_size = 6
+generations = 10
+
 if __name__ == "__main__":
     # display()
+    v_init = [.5, .1, -.8, 2, 25, 0]
+    c = LunarController(v_init[:3], v_init[3:])
+    population = initialize_population(population_size=population_size, vector_size=vector_size, origin_vector=v_init)
+
+    best_fitness = 0
+    goat = LunarController()
+
+    for gen in range(generations):
+        fitness = calculate_fitness(population)
+        parents = select_parents(population, fitness)
+        offspring = crossover(parents)
+        mutated_offspring = mutate(offspring)
+        population = mutated_offspring
+        best_individual_index = np.argmax(fitness)
+        best_individual = population[best_individual_index]
+        if fitness[best_individual_index] > best_fitness:
+            best_fitness = fitness[best_individual_index]
+            goat = LunarController(best_individual[:3], best_individual[3:])
+        print(f"Generation {gen + 1}, Best Individual: {best_individual}, Fitness: {fitness[best_individual_index]}")
+
+
+    display(goat)
     nb_epochs = 1000
     avg_reward = evaluate(nb_epochs)
     print(f'Average reward on {nb_epochs} iterations : {avg_reward:.2f}')
