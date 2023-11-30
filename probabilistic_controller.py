@@ -69,6 +69,7 @@ def make_tree_from_nodes(list_nodes: list[Node], init_child: bool=True):
     n_nodes = len(list_nodes)
     n_steps = int((n_nodes+1)/2)-1
     child_index = 1
+    leaves_parameters = []
     
     for i in range(n_steps):
         list_nodes[i].add_child_true(list_nodes[child_index])
@@ -78,24 +79,22 @@ def make_tree_from_nodes(list_nodes: list[Node], init_child: bool=True):
         for i in range(n_steps, n_nodes):
             list_nodes[i].add_child_true(Probabilistic_Leaf([0.25, 0.25, 0.25, 0.25]))
             list_nodes[i].add_child_false(Probabilistic_Leaf([0.25, 0.25, 0.25, 0.25]))
-    return list_nodes[0]
+            leaves_parameters.append([0.25, 0.25, 0.25, 0.25])
+            leaves_parameters.append([0.25, 0.25, 0.25, 0.25])
+    return list_nodes[0], leaves_parameters
 
 def eval_func(parameters):
-        print("Parameters to evaluate:", parameters)
-        theta_condition_1.add_child_true(Probabilistic_Leaf(parameters[0]))
-        theta_condition_1.add_child_false(Probabilistic_Leaf(parameters[1]))
-
-        theta_condition_2.add_child_true(Probabilistic_Leaf(parameters[2]))
-        theta_condition_2.add_child_false(Probabilistic_Leaf(parameters[3]))
-
-        return test_tree(tree_balance, env)
+        for i in range(0, len(parameters), 2):
+                tree.add_child_true(Probabilistic_Leaf(parameters[i]))
+                tree.add_child_false(Probabilistic_Leaf(parameters[i+1]))
+        return test_tree(tree, env)
 
 def save_parameters(parameter_list):
     np.save("weights.pt", np.array(parameter_list))
     return True
 
 def load_parameters():
-    return np.load("weights.pt")
+    return np.load("weights.pt.npy")
 
 if __name__ == "__main__":
     ACTION_NOTHING = Leaf(0)
@@ -107,54 +106,33 @@ if __name__ == "__main__":
     obs_paramaters = [0 for i in range(n_observations)]
 
     # Naive tree
-    # tree_nodes = [Node(lambda o: o[i] > obs_paramaters[i]) for i in range(n_observations) for _ in range(2**i)]
-    # tree = make_tree_from_nodes(tree_nodes)
+    tree_nodes = [Node(lambda o: o[i] > obs_paramaters[i]) for i in range(n_observations) for _ in range(2**i)]
+    tree, init_parameter_leaves = make_tree_from_nodes(tree_nodes, init_child=True)
     
-    # observation, info = env.reset()
-    # test_tree(tree=tree, env=env)
-
-    # Simple tree: balance the lander
-    tree_balance = Node(lambda o: o[0] > obs_paramaters[0])
+    # hill_climbing_algo = hill_climbing.Hill_Climbing(parameters=init_parameter_leaves,\
+    #                                                  eval_func=eval_func)
     
-    theta_condition_1 = Node(lambda o: o[5] > obs_paramaters[5])
-    theta_condition_2 = Node(lambda o: o[5] > obs_paramaters[5])
-
-    tree_balance.add_child_true(theta_condition_1)
-    tree_balance.add_child_false(theta_condition_2)
-
-    init_parameter_leaves = [
-        [0.1, 0.1, 0.1, 0.7],
-        [0.1, 0.7, 0.1, 0.1],
-        [0.1, 0.1, 0.1, 0.7],
-        [0.1, 0.7, 0.1, 0.1]
-    ]
+    # EPISODES = 10
+    # start_time = time.time()
+    # for episode in range(EPISODES):
+    #     print("EPISODE: ", episode)
+    #     new_parameters = hill_climbing_algo.run_hill_climbing(5)
+    #     print()
+    #     print("--------------------------------")
+    #     print("New parameters:", new_parameters)
+    #     print("--------------------------------")
+    #     print()
+    #     eval_func(new_parameters)
+    #     hill_climbing_algo.parameters = new_parameters
+    #     save_parameters(new_parameters)
+    # total_time = time.time() - start_time
+    # print(f"Total time: {total_time}")
     
-    theta_condition_1.add_child_true(Probabilistic_Leaf(init_parameter_leaves[0]))
-    theta_condition_1.add_child_false(Probabilistic_Leaf(init_parameter_leaves[1]))
 
-    theta_condition_2.add_child_true(Probabilistic_Leaf(init_parameter_leaves[2]))
-    theta_condition_2.add_child_false(Probabilistic_Leaf(init_parameter_leaves[3]))
-
-    # test_tree(tree_balance, env)
-
-    hill_climbing_algo = hill_climbing.Hill_Climbing(parameters=init_parameter_leaves,\
-                                                     eval_func=eval_func)
+    ll_parameters = load_parameters()
+    print("Last parameter: ", ll_parameters)
     
-    EPISODES = 10
-    start_time = time.time()
-    for episode in range(EPISODES):
-        print("EPISODE: ", episode)
-        new_parameters = hill_climbing_algo.run_hill_climbing(10)
-        print()
-        print("--------------------------------")
-        print("New parameters:", new_parameters)
-        print("--------------------------------")
-        print()
-        eval_func(new_parameters)
-        hill_climbing_algo.parameters = new_parameters
-    total_time = time.time() - start_time
-    print(f"Total time: {total_time}")
-    
-    save_parameters(new_parameters)
+    observation, info = env.reset()
+    test_tree(tree=tree, env=env)
 
     env.close()
