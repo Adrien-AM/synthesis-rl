@@ -133,6 +133,6 @@ if __name__ == "__main__":
     avg_reward = evaluate(new_parameters, nb_epochs, True)
     print(f'Average reward on {nb_epochs} iterations : {avg_reward:.2f}')
 
-# [[0.5, 4.828], [0.1, 25.707], [-1.507, -2.828]]: Average reward on 1000 iterations : 210.56
-# [[0.5, 6.242], [0.1, 27.121], [-1.507, -1.414]]: Average reward on 1000 iterations : 226.41
-# [[0.5, 16.847], [0.1, 34.898], [-1.507, 3.535]]: Average reward on 1000 iterations : 252.05
+# [[0.5, 4.828], [0.1, 25.707], [-1.507, -2.828]]: Average reward : 210.56
+# [[0.5, 6.242], [0.1, 27.121], [-1.507, -1.414]]: Average reward : 226.41
+# [[0.5, 16.847], [0.1, 34.898], [-1.507, 3.535]]: Average reward : 252.05 (hill_climbing2)
