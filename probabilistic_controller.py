@@ -109,26 +109,25 @@ if __name__ == "__main__":
     tree_nodes = [Node(lambda o: o[i] > obs_paramaters[i]) for i in range(n_observations) for _ in range(2**i)]
     tree, init_parameter_leaves = make_tree_from_nodes(tree_nodes, init_child=True)
     
-    # hill_climbing_algo = hill_climbing.Hill_Climbing(parameters=init_parameter_leaves,\
-    #                                                  eval_func=eval_func)
+    hill_climbing_algo = hill_climbing.Hill_Climbing(parameters=init_parameter_leaves,\
+                                                     eval_func=eval_func)
     
-    # EPISODES = 10
-    # start_time = time.time()
-    # for episode in range(EPISODES):
-    #     print("EPISODE: ", episode)
-    #     new_parameters = hill_climbing_algo.run_hill_climbing(5)
-    #     print()
-    #     print("--------------------------------")
-    #     print("New parameters:", new_parameters)
-    #     print("--------------------------------")
-    #     print()
-    #     eval_func(new_parameters)
-    #     hill_climbing_algo.parameters = new_parameters
-    #     save_parameters(new_parameters)
-    # total_time = time.time() - start_time
-    # print(f"Total time: {total_time}")
+    EPISODES = 2
+    start_time = time.time()
+    for episode in range(EPISODES):
+        print("EPISODE: ", episode)
+        new_parameters = hill_climbing_algo.run_hill_climbing(5)
+        print()
+        print("--------------------------------")
+        print("New parameters:", new_parameters)
+        print("--------------------------------")
+        print()
+        eval_func(new_parameters)
+        hill_climbing_algo.parameters = new_parameters
+        save_parameters(new_parameters)
+    total_time = time.time() - start_time
+    print(f"Total time: {total_time}")
     
-
     ll_parameters = load_parameters()
     print("Last parameter: ", ll_parameters)
     

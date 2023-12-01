@@ -61,8 +61,6 @@ class Hill_Climbing:
                         print("Update parameter: ", i + 1)
                         self.current_point[i][j] = np.round(before_point+best_step, 3)
                         self.step_size[i][j] = best_step//self.acceleration
-            # if self.current_score > epsilon + before_score:
-            #     return self.current_point
-            if self.current_score < before_score:
-                return before_point
-            return self.current_point
+            if self.current_score > before_score:
+                return self.current_point
+            return before_point

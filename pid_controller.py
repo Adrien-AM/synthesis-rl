@@ -1,3 +1,7 @@
+"""
+From Adrien branch
+"""
+
 import gymnasium as gym
 import hill_climbing
 import numpy as np
@@ -109,23 +113,26 @@ def load_parameters(parameters_path):
     return np.load(parameters_path)
 
 if __name__ == "__main__":
-    parameters_init = [[0.5, 4.828], [0.1, 25.707], [-1.507, -2.828]]
+    parameters_init = [[0.5, 4.828], [0.1, 25.707], [-1.507, -2.828]]   
     
-    saver_init = parameters_init.copy()
-
     optimizer = hill_climbing.Hill_Climbing(parameters=parameters_init,\
-                                                eval_func=evaluate)
+                                                    eval_func=evaluate)
 
-    optimizer.run_hill_climbing(20)
+    epochs=10
+    for epoch in range(epochs):
+        new_parameters = optimizer.run_hill_climbing(20)
+        optimizer = hill_climbing.Hill_Climbing(parameters=new_parameters,\
+                                                    eval_func=evaluate)
 
-    new_parameters = optimizer.get_parameters
-    print(f"Old parameters: {saver_init}")
+    print(f"Old parameters: {[[0.5, 4.828], [0.1, 25.707], [-1.507, -2.828]]}")
     print(f"New parameters: {new_parameters}")
     save_parameters(new_parameters, "pid_hill_climbing2")
 
-    display(new_parameters)
+    display(parameters_init)
     nb_epochs = 1000
     avg_reward = evaluate(new_parameters, nb_epochs, True)
     print(f'Average reward on {nb_epochs} iterations : {avg_reward:.2f}')
 
 # [[0.5, 4.828], [0.1, 25.707], [-1.507, -2.828]]: Average reward on 1000 iterations : 210.56
+# [[0.5, 6.242], [0.1, 27.121], [-1.507, -1.414]]: Average reward on 1000 iterations : 226.41
+# [[0.5, 16.847], [0.1, 34.898], [-1.507, 3.535]]: Average reward on 1000 iterations : 252.05
