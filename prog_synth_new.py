@@ -35,7 +35,7 @@ __syntax = auto_type(
     "y": "STATE -> INPUT",
     "a": "STATE -> INPUT",
     # primitives
-    "ite": "FLOAT -> ACTION -> ACTION",
+    "ite": "FLOAT -> ACTION -> ACTION -> ACTION",
     "scalar": "CONSTANT -> INPUT -> FLOAT",
     "+": "FLOAT -> FLOAT -> FLOAT",
 
@@ -46,3 +46,16 @@ __forbidden_patterns = {}
 dsl = DSL(__syntax, __forbidden_patterns)
 
 cfg = CFG.depth_constraint(dsl, auto_type("STATE -> ACTION"), 4, constant_types = {auto_type("CONSTANT")})
+evaluator = DSLEvaluator(dsl.instantiate_semantics(__semantics))
+
+from synth.syntax import bps_enumerate_prob_grammar
+from synth.syntax.grammars import ProbDetGrammar
+
+pcfg = ProbDetGrammar.uniform(cfg)
+n = 0
+for program in bps_enumerate_prob_grammar(pcfg):
+    print(program)
+   # print("\n".join(program.pretty_print()))
+    n += 1
+    if n> 7:
+        break

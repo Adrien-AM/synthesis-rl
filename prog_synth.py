@@ -40,8 +40,8 @@ class EXPR(PROG):
 @dataclass(frozen=True)
 class ITE(PROG):
     expr: EXPR
-    els: PROG
     then: PROG
+    els: PROG
 
 __semantics = {
     # Primitive
@@ -52,7 +52,7 @@ __semantics = {
 
     # Non primitive
     "prog": lambda ite: lambda action: PROG.run(ite, action),
-    "if": lambda expr: lambda then: lambda els: ITE(expr > 0.0, els, then),
+    "if": lambda expr: lambda then: lambda els: ITE(expr > 0.0, then, els),
     
     "expr": lambda const1: lambda var1: lambda expr: const1 * var1 + expr.sub_expr(), 
 }
@@ -78,4 +78,4 @@ dsl = DSL(__syntax, __forbidden_patterns)
 evaluator = DSLEvaluator(dsl.instantiate_semantics(__semantics))
 
 cfg = CFG.depth_constraint(dsl, FunctionType(PROG, ACTION), 4)
-# evaluator.eval("if 1.0 + 2.0 - 3.0 + 4.0 > 0 then nothing else right")
+# evaluator.eval("if 1.0 + 2.0 - 3.0 + 4.0 > 0 then nothing else right", )
