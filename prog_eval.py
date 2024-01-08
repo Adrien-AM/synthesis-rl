@@ -1,6 +1,8 @@
-from dsl import DSL
+# from dsl import DSL
 from typing import Callable, List, Optional, Tuple
-from program import Constant, Program
+from synth.syntax.program import Constant, Program
+from synth.semantic import DSLEvaluator
+from pid import PIDController
 
 import gymnasium as gym
 import numpy as np
@@ -20,16 +22,31 @@ def eval_function(env: gym.Env, evaluator: DSLEvaluator) -> Callable[[Program], 
         return int, get_returns(episodes)[0] if int else 0
     return func
 
+
+def update_pids(pids: List[PIDController], program: Program, input: np.ndarray) -> List:
+    new_input = []
+    for idx, val in enumerate(program.used_variables()):
+        result = pids[idx].update(input[val])
+        new_input.append(result)
+    return new_input
+        
+
 def eval_program(env: gym.Env, program, evaluator: DSLEvaluator, n: int) -> Tuple[bool, Optional[List[List[Tuple[np.ndarray, int, float]]]]]:
     # assumes that the program does not include constants
     episodes = []
     try:
         for _ in range(n):
             episode = []
-            state = env.reset()
+            state, _ = env.reset()
             done = False
+            # Create a pid controller for each variable
+            pids = [PIDController(0.5, 0, 25, setpoint=0) for _ in program.used_variables()]
+
             while not done:
                 input = __state2env__(state)
+                # update all pids and get new input
+                input = update_pids(pids, program, input)
+
                 action = evaluator.eval(program, input)
                 if action not in env.action_space:
                     return False, None
@@ -41,6 +58,7 @@ def eval_program(env: gym.Env, program, evaluator: DSLEvaluator, n: int) -> Tupl
     except OverflowError:
         return False, None
     return True, episodes
+
 
 # enumerate all constants in a program
 # for const in prog.constants:
