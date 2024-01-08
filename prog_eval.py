@@ -17,8 +17,8 @@ def __state2env__(state: np.ndarray) -> Tuple:
     return state.tolist()
 
 def eval_function(env: gym.Env, evaluator: DSLEvaluator) -> Callable[[Program], Tuple[bool, float]]:
-    def func(program: Program) -> Tuple[bool, float]:
-        int, episodes = eval_program(env, program, evaluator, 1)
+    def func(program: Program, n : int=1) -> Tuple[bool, float]:
+        int, episodes = eval_program(env, program, evaluator, n)
         return int, get_returns(episodes)[0] if int else 0
     return func
 

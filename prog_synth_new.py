@@ -74,7 +74,7 @@ for program in bps_enumerate_prob_grammar(pcfg):
         # print(instantiated_prog.pretty_print())
         # print(eval_fun(instantiated_prog))
         # print("---")
-        score = eval_fun(instantiated_prog)[1]
+        score = eval_fun(instantiated_prog, 5)[1]
         if score > best_score:
             best_score = score
             best_program = instantiated_prog
