@@ -24,12 +24,12 @@ def eval_function(env: gym.Env, evaluator: DSLEvaluator) -> Callable[[Program], 
 
 
 def update_pids(pids: List[PIDController], program: Program, input: np.ndarray) -> List:
-    new_input = []
+    new_input = [0] * len(input)
     for idx, val in enumerate(program.used_variables()):
         result = pids[idx].update(input[val])
-        new_input.append(result)
+        new_input[val] = result
     return new_input
-        
+
 
 def eval_program(env: gym.Env, program, evaluator: DSLEvaluator, n: int) -> Tuple[bool, Optional[List[List[Tuple[np.ndarray, int, float]]]]]:
     # assumes that the program does not include constants
