@@ -23,10 +23,18 @@ def eval_function(env: gym.Env, evaluator: DSLEvaluator) -> Callable[[Program], 
     return func
 
 
+# def update_pids(pids: List[PIDController], program: Program, input: np.ndarray) -> List:
+#     new_input = [0] * len(input)
+#     for idx, val in enumerate(program.used_variables()):
+#         result = pids[idx].update(input[val])
+#         new_input[val] = result
+#     return new_input
+
 def update_pids(pids: List[PIDController], program: Program, input: np.ndarray) -> List:
     new_input = [0] * len(input)
-    for idx, val in enumerate(program.used_variables()):
-        result = pids[idx].update(input[val])
+    idx = [0,1,4]
+    for i, val in enumerate(idx):
+        result = pids[i].update(input[val])
         new_input[val] = result
     return new_input
 
@@ -40,12 +48,13 @@ def eval_program(env: gym.Env, program, evaluator: DSLEvaluator, n: int) -> Tupl
             state, _ = env.reset()
             done = False
             # Create a pid controller for each variable
-            pids = [PIDController(0.5, 0, 25, setpoint=0) for _ in program.used_variables()]
+            pids = [PIDController(np.random.random(), 0, np.random.randint(0,50), setpoint=0)] * 3
 
             while not done:
                 input = __state2env__(state)
                 # update all pids and get new input
                 input = update_pids(pids, program, input)
+                input = [input]
 
                 action = evaluator.eval(program, input)
                 if action not in env.action_space:

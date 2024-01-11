@@ -15,9 +15,9 @@ __semantics = {
     "main": 2,
     "left": 3,
     # input variables (we keep only the relevant ones)
-    "x": lambda s: s,                   # var0 is s0, var1 is s1, ...
-    "y": lambda s: s,
-    "a": lambda s: s,
+    "x": lambda s: s[0],
+    "y": lambda s: s[1],
+    "a": lambda s: s[4],
     # primitives
     "ite": lambda cond: lambda if_block: lambda else_block: if_block if cond > 0 else else_block,
     "scalar": lambda const: lambda inp: const * inp,
@@ -58,8 +58,7 @@ from synth.syntax.program import Constant, Function, Primitive, Program, Variabl
 pcfg = ProbDetGrammar.uniform(cfg)
 
 possible_constantes = {
-    # auto_type("CONSTANT"): np.arange(-1, 1, 0.1)
-    auto_type("CONSTANT"): [-1.0, 0.0, 1.0]
+    auto_type("CONSTANT"): [-1.0, 1.0]
 }
 
 
@@ -84,3 +83,5 @@ for program in bps_enumerate_prob_grammar(pcfg):
     
 print(f"Best score : {best_score}")
 print(best_program.pretty_print())
+
+# ['x0: CONSTANT = 1.0', 'x2: INPUT = x(var0)', 'x3: FLOAT = scalar(x0, x2)', 'x4: FLOAT = +(x3, x3)', 'x5: CONSTANT = -1.0', 'x6: FLOAT = scalar(x5, x2)', 'x7: ACTION = left', 'x8: ACTION = right', 'x9: ACTION = ite(x6, x7, x8)', 'x10: ACTION = nothing', 'x11: ACTION = ite(x4, x9, x10)']  262.19
