@@ -1,18 +1,11 @@
-# from synth import *
-
 from synth.semantic import DSLEvaluator
 from synth.syntax import DSL, auto_type
 from synth.syntax.grammars.cfg import CFG
-from synth.syntax.type_helper import FunctionType
-from dataclasses import dataclass
-from synth.syntax.type_system import PrimitiveType
-import numpy as np
 from synth.syntax import bps_enumerate_prob_grammar
 from synth.syntax.grammars import ProbDetGrammar
-from prog_eval import make_env, eval_function, eval_program
-from synth.syntax.program import Constant, Function, Primitive, Program, Variable
-
-
+from synth.syntax.type_system import Type
+from prog_eval import make_env, eval_function
+import math
 
 def create_semantics(observation_dimension):
     """
@@ -29,10 +22,8 @@ def create_semantics(observation_dimension):
         "scalar": lambda const: lambda inp: const * inp,
         "+": lambda float1: lambda float2: float1 + float2,
     }
-
     for i in range(observation_dimension):
         semantics[str(i)] = lambda s: s[i]
-
     return semantics
 
 def create_syntax(observation_dimension):
@@ -50,10 +41,8 @@ def create_syntax(observation_dimension):
         "scalar": "CONSTANT -> INPUT -> FLOAT",
         "+": "FLOAT -> FLOAT -> FLOAT",
     }
-
     for i in range(observation_dimension):
         syntax[str(i)] = "STATE -> INPUT"
-    
     return auto_type(syntax)
 
 env, reward_min = make_env()
@@ -62,75 +51,43 @@ observation_dimension = env.observation_space.shape[0]
 
 __semantics = create_semantics(observation_dimension)
 __syntax = create_syntax(observation_dimension)
-# __syntax = auto_type(
-#         {
-#         # actions
-#         "nothing": "ACTION",
-#         "right": "ACTION",
-#         "main": "ACTION",
-#         "left": "ACTION",
-#         "0" : "STATE -> INPUT",
-#         # primitives
-#         "ite": "FLOAT -> ACTION -> ACTION -> ACTION",
-#         "scalar": "CONSTANT -> INPUT -> FLOAT",
-#         "+": "FLOAT -> FLOAT -> FLOAT",
-#     })
-
-# print(__syntax)
-
-
 __forbidden_patterns = {}
 
 dsl = DSL(__syntax, __forbidden_patterns)
 
 cfg = CFG.depth_constraint(dsl, auto_type("STATE -> ACTION"), 5, constant_types = {auto_type("CONSTANT")})
 evaluator = DSLEvaluator(dsl.instantiate_semantics(__semantics))
-
-
-
-
-pcfg = ProbDetGrammar.uniform(cfg)
-
 possible_constantes = {
-    auto_type("CONSTANT"): [-1.0, 1.0]
-}
+        auto_type("CONSTANT"): [-1.0, 1.0]
+    }
+def synthesis(
+    cfg: CFG,
+    evaluator: DSLEvaluator,
+    possible_values: dict[Type, list[float]]
+):
+    """
+    """
+    pcfg = ProbDetGrammar.uniform(cfg)
+    eval_func = eval_function(env, evaluator)
+    n_iters = 0
+    best_program = None
+    best_reward = -math.inf
+    for program in bps_enumerate_prob_grammar(pcfg):
+        for instantiated_prog in program.all_constants_instantiation(possible_constantes):
+            _, returns =  eval_func(instantiated_prog, 5)
+            if returns > best_reward:
+                best_reward = returns
+                best_program = instantiated_prog
+                print(f"Program: {instantiated_prog}")
+                print(f"Best reward: {best_reward}")
+                print(f"--------------------------------------------")
+            n_iters += 1
+    return n_iters, best_program, best_reward
 
+n_iters, best_program, best_reward = synthesis(cfg, evaluator)
+print(f"Number of programs generated is {n_iters}")
+print(f"Best program found: {best_program} with reward: {best_reward}")
 
-eval_fun = eval_function(env, evaluator)
-best_program = None
-best_score = -200
-
-can_break = False
-for program in bps_enumerate_prob_grammar(pcfg):
-    for instantiated_prog in program.all_constants_instantiation(possible_constantes):
-        for sub_prog in instantiated_prog.depth_first_iter():
-            # Constant, Function, Primitive, Program, Variable
-            if isinstance(sub_prog, Function):
-                print("Function : ", sub_prog)
-            if isinstance(sub_prog, Constant):
-                print("Constant : ", sub_prog)
-            if isinstance(sub_prog, Primitive):
-                print("Primitive : ", sub_prog)
-            if isinstance(sub_prog, Variable):
-                print("Variable : ", sub_prog)
-                can_break = True
-            if isinstance(sub_prog, Program):
-                print("Program : ", sub_prog)
-        print("-----")
-    if can_break:
-        break
-        # print(instantiated_prog)
-        # print(instantiated_prog.pretty_print())
-        # print(eval_fun(instantiated_prog))
-        # print("---")
-#         score = eval_fun(instantiated_prog, 5)[1]
-#         if score > best_score:
-#             best_score = score
-#             best_program = instantiated_prog
-#             print(f"New best score : {best_score}")
-#             print(best_program.pretty_print())
-#             print("-----")
-    
 
 # for program in bps_enumerate_prob_grammar(pcfg):
 #     # programs = []
