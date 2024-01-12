@@ -38,6 +38,15 @@ def update_pids(pids: List[PIDController], program: Program, input: np.ndarray) 
         new_input[val] = result
     return new_input
 
+def get_nb_variables():
+    # Save the previous sub_prog, if the actual is instance of Variable, count++.
+    ...
+
+def get_variables_index():
+    # Save the previous sub_prog, if the actual is instance of Variable, save the index of the previous one.
+    ...
+
+
 
 def eval_program(env: gym.Env, program, evaluator: DSLEvaluator, n: int) -> Tuple[bool, Optional[List[List[Tuple[np.ndarray, int, float]]]]]:
     # assumes that the program does not include constants
@@ -68,6 +77,28 @@ def eval_program(env: gym.Env, program, evaluator: DSLEvaluator, n: int) -> Tupl
         return False, None
     return True, episodes
 
+# def optimisation(programs, eval_func, reward_min, n=100):
+#     probas = [1 / len(programs)] * len(programs)
+#     best_constants = [c for c in programs[0].constants()]
+#     best_result = eval_func(programs[0])[1]
+#     best_program = programs[0]
+#     for i in range(n):
+#         # select program
+#         program_idx = np.random.choice(np.arange(len(programs)), p=probas)
+#         program = programs[program_idx]
+#         # evaluate
+#         int, reward = eval_func(program)
+#         # update probas
+#         if int:
+#             probas[program_idx] *= 1.1
+#         else:
+#             probas[program_idx] *= 0.9
+#         probas = [proba / sum(probas) for proba in probas]
+#     return best_program
+
+
+# if __name__ == '__main__':
+#     optimisation([1,2,3,4,5])
 
 # enumerate all constants in a program
 # for const in prog.constants:
