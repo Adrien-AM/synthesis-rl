@@ -57,7 +57,7 @@ dsl = DSL(__syntax, __forbidden_patterns)
 
 cfg = CFG.depth_constraint(dsl, auto_type("STATE -> ACTION"), 5, constant_types = {auto_type("CONSTANT")})
 evaluator = DSLEvaluator(dsl.instantiate_semantics(__semantics))
-possible_constantes = {
+possible_constants = {
         auto_type("CONSTANT"): [-1.0, 1.0]
     }
 def synthesis(
@@ -73,7 +73,7 @@ def synthesis(
     best_program = None
     best_reward = -math.inf
     for program in bps_enumerate_prob_grammar(pcfg):
-        for instantiated_prog in program.all_constants_instantiation(possible_constantes):
+        for instantiated_prog in program.all_constants_instantiation(possible_values):
             _, returns =  eval_func(instantiated_prog, 5)
             if returns > best_reward:
                 best_reward = returns
@@ -84,7 +84,7 @@ def synthesis(
             n_iters += 1
     return n_iters, best_program, best_reward
 
-n_iters, best_program, best_reward = synthesis(cfg, evaluator)
+n_iters, best_program, best_reward = synthesis(cfg, evaluator, possible_constants)
 print(f"Number of programs generated is {n_iters}")
 print(f"Best program found: {best_program} with reward: {best_reward}")
 
