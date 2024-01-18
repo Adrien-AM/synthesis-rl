@@ -5,65 +5,52 @@ from synth.syntax import bps_enumerate_prob_grammar
 from synth.syntax.grammars import ProbDetGrammar
 from synth.syntax.type_system import Type
 from prog_eval import make_env, eval_function
+import codecarbon
 import math
 
-def create_semantics(observation_dimension):
+def create_semantics(observation_dimension,action_space):
     """
         Generate a generic semantic for the DSL with observation_dimension input variables
     """
     semantics = {
-        # actions
-        "nothing": 0,
-        "right": 1,
-        "main": 2,
-        "left": 3,
         # primitives
         "ite": lambda cond: lambda if_block: lambda else_block: if_block if cond > 0 else else_block,
         "scalar": lambda const: lambda inp: const * inp,
         "+": lambda float1: lambda float2: float1 + float2,
     }
+    # Actions
+    for i in range(action_space):
+        semantics["act_" + str(i)] = i
+    # Inputs
     for i in range(observation_dimension):
-        semantics[str(i)] = lambda s: s[i]
+        semantics["obs" + str(i)] = lambda s: s[i]
+        
     return semantics
 
-def create_syntax(observation_dimension):
+def create_syntax(observation_dimension, action_space):
     """
         Generate a generic syntax for the DSL with observation_dimension input variables
     """
     syntax = {
-        # actions
-        "nothing": "ACTION",
-        "right": "ACTION",
-        "main": "ACTION",
-        "left": "ACTION",
         # primitives
         "ite": "FLOAT -> ACTION -> ACTION -> ACTION",
         "scalar": "CONSTANT -> INPUT -> FLOAT",
         "+": "FLOAT -> FLOAT -> FLOAT",
     }
+    # Actions
+    for i in range(action_space):
+        syntax["act_" + str(i)] = "ACTION"
+    # Inputs
     for i in range(observation_dimension):
-        syntax[str(i)] = "STATE -> INPUT"
+        syntax["obs_" + str(i)] = "STATE -> INPUT"
+
     return auto_type(syntax)
 
-env, reward_min = make_env()
-# observation space
-observation_dimension = env.observation_space.shape[0]
-
-__semantics = create_semantics(observation_dimension)
-__syntax = create_syntax(observation_dimension)
-__forbidden_patterns = {}
-
-dsl = DSL(__syntax, __forbidden_patterns)
-
-cfg = CFG.depth_constraint(dsl, auto_type("STATE -> ACTION"), 5, constant_types = {auto_type("CONSTANT")})
-evaluator = DSLEvaluator(dsl.instantiate_semantics(__semantics))
-possible_constants = {
-        auto_type("CONSTANT"): [-1.0, 1.0]
-    }
 def synthesis(
     cfg: CFG,
     evaluator: DSLEvaluator,
-    possible_values: dict[Type, list[float]]
+    possible_values: dict[Type, list[float]],
+    reward_min: float
 ):
     """
     """
@@ -74,8 +61,10 @@ def synthesis(
     best_reward = -math.inf
     for program in bps_enumerate_prob_grammar(pcfg):
         for instantiated_prog in program.all_constants_instantiation(possible_values):
-            _, returns =  eval_func(instantiated_prog, 5)
+            _, returns =  eval_func(instantiated_prog, 15)
             if returns > best_reward:
+                if returns > reward_min:
+                    return n_iters, instantiated_prog, returns
                 best_reward = returns
                 best_program = instantiated_prog
                 print(f"Program: {instantiated_prog}")
@@ -84,10 +73,32 @@ def synthesis(
             n_iters += 1
     return n_iters, best_program, best_reward
 
-n_iters, best_program, best_reward = synthesis(cfg, evaluator, possible_constants)
-print(f"Number of programs generated is {n_iters}")
-print(f"Best program found: {best_program} with reward: {best_reward}")
 
+if __name__ == "__main__":
+    # tracker = codecarbon.EmissionsTracker()
+    # tracker.start()
+    env, reward_min = make_env()
+    # observation space
+    observation_dimension = env.observation_space.shape[0]
+    action_space = env.action_space.n
+
+    __semantics = create_semantics(observation_dimension, action_space)
+    __syntax = create_syntax(observation_dimension, action_space)
+    __forbidden_patterns = {}
+
+    dsl = DSL(__syntax, __forbidden_patterns)
+
+    cfg = CFG.depth_constraint(dsl, auto_type("STATE -> ACTION"), 4, constant_types = {auto_type("CONSTANT")})
+    evaluator = DSLEvaluator(dsl.instantiate_semantics(__semantics))
+    possible_constants = {
+            auto_type("CONSTANT"): [-1.0, 1.0]
+        }
+    
+    n_iters, best_program, best_reward = synthesis(cfg, evaluator, possible_constants, reward_min)
+    print(f"Number of programs generated is {n_iters}")
+    print(f"Best program found: {best_program} with reward: {best_reward}")
+
+    # tracker.stop()
 
 # for program in bps_enumerate_prob_grammar(pcfg):
 #     # programs = []
