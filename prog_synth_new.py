@@ -1,15 +1,18 @@
 from synth.semantic import DSLEvaluator
-from synth.syntax import DSL, auto_type
+from synth.syntax import auto_type
 from synth.syntax.grammars.cfg import CFG
 from synth.syntax import bps_enumerate_prob_grammar
 from synth.syntax.grammars import ProbDetGrammar
 from synth.syntax.type_system import Type
-from prog_eval import make_env, eval_function
+from prog_eval import eval_function
+from utils import save_with_pickle
+import gymnasium as gym
+import time
 import math
 
 def create_semantics(observation_dimension):
     """
-        Generate a generic semantic for the DSL with observation_dimension input variables
+    Generate a generic semantic for the DSL with observation_dimension input variables
     """
     semantics = {
         # actions
@@ -28,7 +31,7 @@ def create_semantics(observation_dimension):
 
 def create_syntax(observation_dimension):
     """
-        Generate a generic syntax for the DSL with observation_dimension input variables
+    Generate a generic syntax for the DSL with observation_dimension input variables
     """
     syntax = {
         # actions
@@ -45,34 +48,34 @@ def create_syntax(observation_dimension):
         syntax[str(i)] = "STATE -> INPUT"
     return auto_type(syntax)
 
-env, reward_min = make_env()
-# observation space
-observation_dimension = env.observation_space.shape[0]
-
-__semantics = create_semantics(observation_dimension)
-__syntax = create_syntax(observation_dimension)
-__forbidden_patterns = {}
-
-dsl = DSL(__syntax, __forbidden_patterns)
-
-cfg = CFG.depth_constraint(dsl, auto_type("STATE -> ACTION"), 5, constant_types = {auto_type("CONSTANT")})
-evaluator = DSLEvaluator(dsl.instantiate_semantics(__semantics))
-possible_constants = {
-        auto_type("CONSTANT"): [-1.0, 1.0]
-    }
 def synthesis(
+    env: gym.Env,
     cfg: CFG,
     evaluator: DSLEvaluator,
-    possible_values: dict[Type, list[float]]
+    possible_values: dict[Type, list[float]],
+    time_out: float,
+    threshold: float,
+    save_programs: bool=False,
+    save_path: str="potential_programs.pkl",
 ):
     """
     """
+    print(f"-----------------------------------------------")
+    print(f"Program synthesis starts...")
+    if save_programs and save_path is None:
+        raise ValueError("save_path cannot be None when save_programs is True")
+    start_time = time.time()
     pcfg = ProbDetGrammar.uniform(cfg)
     eval_func = eval_function(env, evaluator)
     n_iters = 0
     best_program = None
     best_reward = -math.inf
+    potential_programs = []
+    
     for program in bps_enumerate_prob_grammar(pcfg):
+        if time.time() - start_time > time_out:
+            print("Time out reached")
+            break
         for instantiated_prog in program.all_constants_instantiation(possible_values):
             _, returns =  eval_func(instantiated_prog, 5)
             if returns > best_reward:
@@ -81,13 +84,22 @@ def synthesis(
                 print(f"Program: {instantiated_prog}")
                 print(f"Best reward: {best_reward}")
                 print(f"--------------------------------------------")
+            if  threshold <= returns:
+                potential_programs.append((instantiated_prog, returns))
             n_iters += 1
-    return n_iters, best_program, best_reward
+    if save_programs:
+        save_with_pickle(save_path, potential_programs)
+    
+    n_selected_programs = len(potential_programs)
+    print(f"Number of programs generated is {n_iters}")
+    print(f"Number of selected programs is {n_selected_programs}")
+    print(f"Best program found: {best_program}")
+    print(f"Best program reward: {best_reward}")
+    print(f"-----------------------------------------------")
+    return n_iters, best_program, best_reward, potential_programs
 
-n_iters, best_program, best_reward = synthesis(cfg, evaluator, possible_constants)
-print(f"Number of programs generated is {n_iters}")
-print(f"Best program found: {best_program} with reward: {best_reward}")
-
+# Program: (ite (scalar -1.0 (0 var0)) (ite (scalar 1.0 (1 var0)) right main) nothing)
+# Best reward: 248.83281240733658
 
 # for program in bps_enumerate_prob_grammar(pcfg):
 #     # programs = []
