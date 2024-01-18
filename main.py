@@ -4,24 +4,29 @@ from synth.syntax.grammars.cfg import CFG
 from prog_eval import make_env
 from prog_synth_new import create_semantics, create_syntax, synthesis
 from ucb import ucb_selection
+# import codecarbon
 
 # Global variables
-NB_MINUTES = 15
+NB_MINUTES = 180
 TIME_OUT = 60*NB_MINUTES
-REWARD_THRESHOLD = 150
+REWARD_THRESHOLD = 200
 
 # UCB parameters
 NB_ITERATIONS = 100
 NB_PROGRAM_EVALUATIONS = 100
 
+# Environment parameters
+env, reward_min = make_env()
+OBS_DIM = env.observation_space.shape[0]
+ACTION_SPACE = env.action_space.n
+
+
 if __name__ == '__main__':
-    env, reward_min = make_env()
+    # tracker = codecarbon.EmissionsTracker()
+    # tracker.start()
 
-    # observation space
-    observation_dimension = env.observation_space.shape[0]
-
-    __semantics = create_semantics(observation_dimension)
-    __syntax = create_syntax(observation_dimension)
+    __semantics = create_semantics(OBS_DIM, ACTION_SPACE)
+    __syntax = create_syntax(OBS_DIM, ACTION_SPACE)
     __forbidden_patterns = {}
 
     dsl = DSL(__syntax, __forbidden_patterns)
@@ -45,3 +50,5 @@ if __name__ == '__main__':
                                                            NB_PROGRAM_EVALUATIONS,
                                                            evaluator,
                                                            potential_programs)
+
+    # tracker.stop()

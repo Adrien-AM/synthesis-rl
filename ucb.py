@@ -15,7 +15,7 @@ def ucb_selection(
 ) -> List[Tuple[Program, float]]:
     """
     """
-    print(f"---------------------------------------------------------")
+    print(f"-----------------------------------------------")
     eval_func = eval_function(env, evaluator)
     n_programs = len(potential_programs)
     print(f"UCB program selection starts on {n_programs} programs...")
@@ -27,14 +27,14 @@ def ucb_selection(
     if n_programs == 0:
         raise ValueError("You provided empty potential programs list.")
     if n_programs == 1:
-        program, _ = potential_programs[0]
-        _, returns = eval_func(program, n_program_eval)
+        best_program, _ = potential_programs[0]
+        _, returns = eval_func(best_program, n_program_eval)
         print(f"After UCB:")
         print(f"You gave one program: {best_program}")
         print(f"The program average reward: {returns}")
-        print(f"---------------------------------------------------------")
+        print(f"-----------------------------------------------")
         print()
-        return program, returns
+        return best_program, returns
     
     # First UCB iteration on all programs
     for i in range(n_programs):            
@@ -65,7 +65,7 @@ def ucb_selection(
     print(f"After UCB:")
     print(f"Program selected: {best_program}")
     print(f"Program selected average rewards: {best_average_reward}")
-    print(f"---------------------------------------------------------")
+    print(f"-----------------------------------------------")
     print()
 
     return best_program, best_average_reward
