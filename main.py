@@ -10,6 +10,7 @@ from ucb import ucb_selection
 NB_MINUTES = 180
 TIME_OUT = 60*NB_MINUTES
 REWARD_THRESHOLD = 200
+DELETE_PROGRAM_THRESHOLD = 1e9
 
 # UCB parameters
 NB_ITERATIONS = 100
@@ -43,6 +44,7 @@ if __name__ == '__main__':
                                                                     possible_constants,
                                                                     TIME_OUT,
                                                                     REWARD_THRESHOLD,
+                                                                    DELETE_PROGRAM_THRESHOLD,
                                                                     save_programs=True)
     
     best_ucb_program, best_ucb_avg_rewards = ucb_selection(env,

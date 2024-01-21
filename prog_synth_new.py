@@ -69,6 +69,7 @@ def synthesis(
     possible_values: dict[Type, list[float]],
     time_out: float,
     threshold: float,
+    delete_program_threshold: float,
     save_programs: bool=False,
     save_path: str="potential_programs.pkl",
 ):
@@ -87,25 +88,29 @@ def synthesis(
     best_reward = -math.inf
     potential_programs = []
     
-    for program in bps_enumerate_prob_grammar(pcfg):
+    enumerator = bps_enumerate_prob_grammar(pcfg)
+
+    for program in enumerator:
+        if len(enumerator._seen) > delete_program_threshold:
+            enumerator._seen = set()
         if time.time() - start_time > time_out:
             print("Time out reached")
             break
         if not check_all_action_possible(program, env.action_space.n):
             continue
         for instantiated_prog in program.all_constants_instantiation(possible_values):
-            # _, returns =  eval_func(instantiated_prog, 15)
-            # if returns > best_reward:
-            #     best_reward = returns
-            #     best_program = instantiated_prog
-            #     print(f"Program: {instantiated_prog}")
-            #     print(f"Best reward: {best_reward}")
-            #     print(f"--------------------------------------------")
-            # if  threshold <= returns:
-            #     potential_programs.append((instantiated_prog, returns))
+            _, returns =  eval_func(instantiated_prog, 15)
+            if returns > best_reward:
+                best_reward = returns
+                best_program = instantiated_prog
+                print(f"Program: {instantiated_prog}")
+                print(f"Best reward: {best_reward}")
+                print(f"--------------------------------------------")
+            if  threshold <= returns:
+                potential_programs.append((instantiated_prog, returns))
             n_iters += 1
-    # if save_programs:
-    #     save_with_pickle(save_path, potential_programs)
+    if save_programs:
+        save_with_pickle(save_path, potential_programs)
     
     n_selected_programs = len(potential_programs)
     print(f"Number of programs generated is {n_iters}")
