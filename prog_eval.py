@@ -27,7 +27,7 @@ def eval_function(env: gym.Env, evaluator: DSLEvaluator) -> Callable[[Program], 
     """
     def func(program: Program, n : int=1) -> Tuple[bool, float]:
         int, episodes = eval_program(env, program, evaluator, n)
-        return int, get_returns(episodes)[0] if int else 0
+        return int, np.mean(get_returns(episodes)) if int else 0
     return func
 
 def get_nb_variables(program: Program):
