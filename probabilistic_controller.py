@@ -4,8 +4,6 @@ import numpy as np
 import time
 import hill_climbing
 
-
-
 env = gym.make("LunarLander-v2", render_mode="human")
 observation, info = env.reset()
 

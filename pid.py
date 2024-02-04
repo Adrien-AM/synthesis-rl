@@ -1,10 +1,4 @@
-"""
-From Adrien branch
-"""
-
 import gymnasium as gym
-import hill_climbing
-import numpy as np
 
 ACTION_NOTHING = 0
 ACTION_LEFT = 1
@@ -12,6 +6,15 @@ ACTION_MAIN = 2
 ACTION_RIGHT = 3
 
 class PIDController:
+    """
+    Proportional-Integral-Derivative (PID) Controller for controlling a system.
+
+    Parameters:
+    - P (float): Proportional gain.
+    - I (float): Integral gain.
+    - D (float): Derivative gain.
+    - setpoint (float): Target value for the controlled variable.
+    """
     def __init__(self, P, I, D, setpoint):
         self.Kp = P
         self.Ki = I
@@ -21,6 +24,15 @@ class PIDController:
         self.setpoint = setpoint
 
     def update(self, measured_value):
+        """
+        Update the controller based on the current measured value.
+
+        Parameters:
+        - measured_value (float): The current value of the system being controlled.
+
+        Returns:
+        - float: The control output computed by the PID controller.
+        """
         dt = 1
         # First term : proportional
         error = self.setpoint - measured_value
@@ -36,11 +48,17 @@ class PIDController:
         return output
 
 class LunarController:
-    def __init__(self, parameters):
+    """
+    Hand made controller for the Lunar Lander environment using three PID controllers for x, y, and angle control.
+
+    Parameters:
+    - P, I, D (float): Proportional, Integral, and Derivative gains for each controller.
+    """
+    def __init__(self):
         # Setpoint is 0 for all 3 of them since we want to get the robot to point (0,0) with angle 0
-        self.xcontroller = PIDController(P=parameters[0][0], I=0, D=parameters[0][1], setpoint=0)
-        self.ycontroller = PIDController(P=parameters[1][0], I=0, D=parameters[1][1], setpoint=0)
-        self.acontroller = PIDController(P=parameters[2][0], I=-0, D=parameters[2][1], setpoint=0)
+        self.xcontroller = PIDController(P=.5, I=0, D=2, setpoint=0)
+        self.ycontroller = PIDController(P=.1, I=0, D=25, setpoint=0)
+        self.acontroller = PIDController(P=-.8, I=-0, D=0, setpoint=0)
 
     def play(self, obs):
         x, y, vx, vy, a, va, l1, l2 = obs
@@ -58,10 +76,10 @@ class LunarController:
         
         return ACTION_NOTHING
 
-def display(parameters):
+def display():
     env = gym.make("LunarLander-v2", render_mode="human")
     observation, info = env.reset()
-    controller = LunarController(parameters)
+    controller = LunarController()
 
     done = False
     truncated = False
@@ -78,17 +96,16 @@ def display(parameters):
     print(f'Total reward : {total_reward:.2f}')
     env.close()
 
-def evaluate(parameters, nb_epochs = 1000, verbose=False):
+def evaluate(nb_epochs = 1000):
     env = gym.make("LunarLander-v2")
     observation, info = env.reset()
-    controller = LunarController(parameters)
+    controller = LunarController()
 
     i = 0
     s = 0
     while i < nb_epochs:
-        if verbose:
-            if i % (nb_epochs//10) == 0:
-                print(f'Iteration {i}/{nb_epochs}')
+        if i % (nb_epochs//10) == 0:
+            print(f'Iteration {i}/{nb_epochs}')
         i += 1
         done = False
         truncated = False
@@ -105,34 +122,8 @@ def evaluate(parameters, nb_epochs = 1000, verbose=False):
     return s / nb_epochs
 
 
-def save_parameters(parameter_list, file_name):
-    np.save(file_name, np.array(parameter_list))
-    return True
-
-def load_parameters(parameters_path):
-    return np.load(parameters_path)
-
 if __name__ == "__main__":
-    parameters_init = [[0.5, 4.828], [0.1, 25.707], [-1.507, -2.828]]   
-    
-    optimizer = hill_climbing.Hill_Climbing(parameters=parameters_init,\
-                                                    eval_func=evaluate)
-
-    epochs=10
-    for epoch in range(epochs):
-        new_parameters = optimizer.run_hill_climbing(20)
-        optimizer = hill_climbing.Hill_Climbing(parameters=new_parameters,\
-                                                    eval_func=evaluate)
-
-    print(f"Old parameters: {[[0.5, 4.828], [0.1, 25.707], [-1.507, -2.828]]}")
-    print(f"New parameters: {new_parameters}")
-    save_parameters(new_parameters, "pid_hill_climbing2")
-
-    display(parameters_init)
+    display()
     nb_epochs = 1000
-    avg_reward = evaluate(new_parameters, nb_epochs, True)
+    avg_reward = evaluate(nb_epochs)
     print(f'Average reward on {nb_epochs} iterations : {avg_reward:.2f}')
-
-# [[0.5, 4.828], [0.1, 25.707], [-1.507, -2.828]]: Average reward : 210.56
-# [[0.5, 6.242], [0.1, 27.121], [-1.507, -1.414]]: Average reward : 226.41
-# [[0.5, 16.847], [0.1, 34.898], [-1.507, 3.535]]: Average reward : 252.05 (hill_climbing2)

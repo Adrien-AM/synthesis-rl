@@ -6,9 +6,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
 .gitignore
-lab.py
-save.py
+
 # venv
 lib
 lib64
