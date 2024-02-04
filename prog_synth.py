@@ -165,8 +165,6 @@ def synthesis(
     enumerator = bps_enumerate_prob_grammar(pcfg)
 
     for i, program in enumerate(enumerator):
-        if len(enumerator._seen) > delete_program_threshold:
-            enumerator._seen = set()
         if time.time() - start_time > time_out:
             print("Time out reached")
             break

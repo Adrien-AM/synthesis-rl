@@ -110,7 +110,6 @@ def update_pids(pids: List[PIDController], input: np.ndarray, indices: List[int]
 
     Parameters:
     - pids (List[PIDController]): List of PID controllers.
-    - program (Program): The program to update PID controllers.
     - input (np.ndarray): The input to the program.
     - indices (List[int]): List of indices specifying which variables to update.
 
@@ -157,7 +156,7 @@ def eval_program(
             while not done:
                 input = __state2env__(state)
                 # update all pids and get new input
-                input = update_pids(pids, program, input, indices)
+                input = update_pids(pids, input, indices)
                 input = [input]
 
                 action = evaluator.eval(program, input)
