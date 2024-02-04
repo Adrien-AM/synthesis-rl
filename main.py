@@ -5,7 +5,7 @@ from prog_eval import make_env
 from prog_synth import create_semantics, create_syntax, synthesis
 from ucb import ucb_selection
 from optim.hill_climbing import hill_climbing
-# import codecarbon
+import codecarbon
 
 # Global variables
 NB_MINUTES = 30
@@ -25,8 +25,8 @@ ACTION_SPACE = env.action_space.n
 OPTIM_ALGO = hill_climbing
 
 if __name__ == '__main__':
-    # tracker = codecarbon.EmissionsTracker()
-    # tracker.start()
+    tracker = codecarbon.EmissionsTracker()
+    tracker.start()
 
     __semantics = create_semantics(OBS_DIM, ACTION_SPACE)
     __syntax = create_syntax(OBS_DIM, ACTION_SPACE)
@@ -57,4 +57,4 @@ if __name__ == '__main__':
                                                            evaluator,
                                                            potential_programs)
 
-    # tracker.stop()
+    tracker.stop()
