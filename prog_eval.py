@@ -9,12 +9,12 @@ import numpy as np
 
 def make_env() -> Tuple[gym.Env, float]:
     """
-    Creates a Gym environment and sets a default maximum score.
+    Creates a Gym environment and sets a default goal score.
 
     Returns:
-    - Tuple[gym.Env, float]: Tuple containing the Gym environment and the maximum score.
+    - Tuple[gym.Env, float]: Tuple containing the Gym environment and the goal score.
     """
-    return gym.make("CartPole-v1"), 200 
+    return gym.make("CartPole-v1"), 400 
 
 def get_returns(episodes: List[List[Tuple[np.ndarray, int, float]]]) -> List[float]:
     """

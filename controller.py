@@ -1,5 +1,4 @@
 import gymnasium as gym
-import math
 
 env = gym.make("LunarLander-v2", wind_power=5, render_mode="human")
 observation, info = env.reset()
