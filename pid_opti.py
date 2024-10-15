@@ -1,6 +1,7 @@
 import gymnasium as gym
 import numpy as np
 import time
+from pid import LunarController, PIDController
 
 ACTION_NOTHING = 0
 ACTION_LEFT = 1
@@ -81,7 +82,7 @@ def evaluate(Ps, Ds, nb_tests = 50):
     controller = LunarController(Ps=Ps, Ds=Ds)
 
     total_reward = 0
-    for j in range(nb_tests):
+    for _ in range(nb_tests):
         done = False
         while not done:
             move = controller.play(observation)

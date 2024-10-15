@@ -6,6 +6,15 @@ ACTION_MAIN = 2
 ACTION_RIGHT = 3
 
 class PIDController:
+    """
+    Proportional-Integral-Derivative (PID) Controller for controlling a system.
+
+    Parameters:
+    - P (float): Proportional gain.
+    - I (float): Integral gain.
+    - D (float): Derivative gain.
+    - setpoint (float): Target value for the controlled variable.
+    """
     def __init__(self, P, I, D, setpoint):
         self.Kp = P
         self.Ki = I
@@ -15,6 +24,15 @@ class PIDController:
         self.setpoint = setpoint
 
     def update(self, measured_value):
+        """
+        Update the controller based on the current measured value.
+
+        Parameters:
+        - measured_value (float): The current value of the system being controlled.
+
+        Returns:
+        - float: The control output computed by the PID controller.
+        """
         dt = 1
         # First term : proportional
         error = self.setpoint - measured_value
@@ -30,6 +48,12 @@ class PIDController:
         return output
 
 class LunarController:
+    """
+    Hand made controller for the Lunar Lander environment using three PID controllers for x, y, and angle control.
+
+    Parameters:
+    - P, I, D (float): Proportional, Integral, and Derivative gains for each controller.
+    """
     def __init__(self):
         # Setpoint is 0 for all 3 of them since we want to get the robot to point (0,0) with angle 0
         self.xcontroller = PIDController(P=.5, I=0, D=2, setpoint=0)
@@ -99,7 +123,7 @@ def evaluate(nb_epochs = 1000):
 
 
 if __name__ == "__main__":
-    # display()
+    display()
     nb_epochs = 1000
     avg_reward = evaluate(nb_epochs)
     print(f'Average reward on {nb_epochs} iterations : {avg_reward:.2f}')
